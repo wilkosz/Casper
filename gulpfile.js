@@ -20,6 +20,18 @@ function serve(done) {
     done();
 }
 
+function init(done) {
+  pump([
+      src('node_modules/highlightjs/highlight.pack.js'),
+      dest('assets/js/'),
+  ], handleError(done));
+
+  pump([
+      src('node_modules/highlightjs/styles/dracula.css'),
+      dest('assets/css/'),
+  ], handleError(done));
+}
+
 const handleError = (done) => {
     return function (err) {
         if (err) {
@@ -55,7 +67,7 @@ function css(done) {
 
 function js(done) {
     pump([
-        src('assets/js/*.js', {sourcemaps: true}),
+        src('assets/js/**/*.js', {sourcemaps: true}),
         uglify(),
         dest('assets/built/', {sourcemaps: '.'}),
         livereload()
@@ -81,8 +93,9 @@ function zipper(done) {
 const cssWatcher = () => watch('assets/css/**', css);
 const hbsWatcher = () => watch(['*.hbs', 'partials/**/*.hbs', '!node_modules/**/*.hbs'], hbs);
 const watcher = parallel(cssWatcher, hbsWatcher);
-const build = series(css, js);
+const build = series(init, css, js);
 const dev = series(build, serve, watcher);
+
 
 exports.build = build;
 exports.zip = series(build, zipper);
